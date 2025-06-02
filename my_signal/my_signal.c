@@ -2,13 +2,27 @@
 #include <signal.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdatomic.h>
+#include <string.h>
 
 int signal_flag = 0;
 
 void sig_handler(int signum)
 {
-    signal_flag = 1;
-    printf("Signal %d received\n", signum);
+    atomic_store(&signal_flag, 1); // 使用原子操作修改全局变量
+
+    // 将信号编号转换为字符串
+    char signum_str[10];
+    memset(signum_str, '\0', sizeof(signum_str));
+    snprintf(signum_str, sizeof(signum_str), "%d", signum);
+
+    // 构造完整的输出消息
+    char msg[50];
+    memset(msg, '\0', sizeof(msg));
+    snprintf(msg, sizeof(msg), "Signal %s received\n", signum_str);
+
+    // 使用 write 将消息写入标准输出
+    write(STDOUT_FILENO, msg, strlen(msg));
 }
 
 void *my_thread(void *arg)
